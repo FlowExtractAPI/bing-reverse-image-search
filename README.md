@@ -9,7 +9,7 @@ Give it one picture or a list of hundreds. For each one it returns a summary row
 - **Bing's best guess** — the name Bing gives the picture, plus the search it suggests for it.
 - **Visually similar images** — most similar first, each with the full-size image URL, a thumbnail, Bing's own cached copy (still works when the original is taken down), width and height, file size, file type, publish date and the page it sits on. A single picture can return several hundred.
 - **Pages that carry the picture** — the web pages where the picture itself appears, with their titles and dates.
-- **Related and shopping searches** — what people search for with this picture, ready to feed keyword research.
+- **Related and shopping searches** — what people search for with this picture, ready to feed keyword research. Related and shopping searches share your row limit fairly, so a low limit still returns both. For pictures Bing has no picture-based searches for (documents, screenshots), the related searches Bing shows for its best guess are returned instead and marked `origin: "web"`.
 - **Text in the picture** — every line of writing Bing can read, with where it sits on the picture.
 - **AI description** — Bing's short description of the picture with numbered sources.
 - **Links, files and data links** — paste image links, upload a file, or pass a `data:` link. Large pictures are resized automatically; you never have to prepare them.
@@ -22,7 +22,7 @@ Give it one picture or a list of hundreds. For each one it returns a summary row
 | Picture summary (`image_summary`) | `bestGuess`, `suggestedQuery`, `bestRepresentativeQuery`, `hasText`, `similarImagesAvailable`, the counts returned, `textInImage`, and the size and type of the picture you supplied |
 | Similar image (`similar_image`) | `title`, `link`, `source`, `original`, `originalWidth`, `originalHeight`, `thumbnail`, `cachedImage`, `fileSize`, `format`, `datePublished`, `dateDiscovered`, `pagesIncludingCount`, `availableSizesCount`, `accentColor`, `imageId`, `bingUrl` |
 | Page that carries the picture (`matching_page`) | the same fields as a similar image |
-| Related search (`related_search`) | `text`, `category` (`related` or `shopping`), `searchUrl`, `thumbnail` |
+| Related search (`related_search`) | `text`, `category` (`related` or `shopping`), `origin` (`image` or `web`), `searchUrl`, `thumbnail` |
 | Text in the picture (`text`) | `text`, `boundingBox` (the line's four corners as fractions of the picture) |
 | AI description (`ai_overview`) | `text`, `citations` (number, URL, title, source, snippet) |
 
@@ -173,7 +173,7 @@ The Actor has no face recognition of its own. It returns what Bing returns for t
 
 ### How many similar images can I get for one picture?
 
-It depends on the picture. A rarely published photo may have a few dozen; a well-known landmark or product can have several hundred (a single photo returned more than 600 in testing). Set **Max results per type** to `0` to take everything Bing returns. The number Bing estimates is reported as `similarImagesAvailable`; it is an estimate and moves between runs.
+It depends on the picture, and on Bing: a rarely published photo may have a few dozen; a well-known landmark or product can have several hundred. Bing is not consistent between runs — one test photo returned about 110 similar images in one run and more than 600 in another, because Bing recognised it slightly differently each time. Set **Max results per type** to `0` to take everything Bing returns. The number Bing estimates is reported as `similarImagesAvailable`; it is an estimate and moves between runs.
 
 ### Why do two runs on the same picture give slightly different results?
 
@@ -202,7 +202,8 @@ The Actor saves its progress and picks up where it left off, without repeating o
 | Bing holds fewer matches for this picture | A shorter list; `similarImagesAvailable` shows Bing's estimate | Try another market, or a larger version of the picture |
 | The link is a web page, a missing file, or not a picture | One notice row with `resultType: "guidance"` and a `status` such as `not_an_image` (not charged) | Use the direct image address, or upload the file |
 | The picture is too small or too large | A notice with `too_small` or `too_large` (not charged) | Use a picture between about 16 pixels and 25 megapixels |
-| Bing returned nothing for the picture | A summary row with `status: "no_matches"` (not charged) | Try a sharper, larger version |
+| Only extras are selected (no similar images, no pages) | A summary row with a `hint`, plus the extras you chose — no matches | Select **Visually similar images** and/or **Pages containing this image** |
+| Bing returned nothing for the picture | A summary row with `status: "no_matches"` (not charged); any related searches read for its best guess are delivered free | Try a sharper, larger version |
 | Bing declined the picture | A notice with `rejected` (not charged) | Try another version; if every picture is declined, run again later |
 | Bing did not answer | A notice with `bing_unavailable` (not charged); the picture is kept for a resume | Run it again later |
 | The run reached its time limit | A final `time_limit` notice | Raise the run timeout, or search fewer pictures per run |
